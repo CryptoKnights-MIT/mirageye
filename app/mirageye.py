@@ -165,52 +165,14 @@ def summarize_text(text):
     summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
 
     return summary
-def insert_newlines(text, words_per_line=10):
-    # Split the text into words using whitespace as the separator
-    words = text.split()
-    
-    # Use a list comprehension to join words into lines with a specified number of words per line
-    lines = [' '.join(words[i:i+words_per_line]) for i in range(0, len(words), words_per_line)]
-    
-    # Join the lines with newline characters
-    result = '\n'.join(lines)
-    
-    return result
-class TextColor:
-    RESET = "\033[0m"
-    BOLD = "\033[1m"
-    ITALIC = "\033[3m"
-    UNDERLINE = "\033[4m"
-    REVERSE = "\033[7m"
-    BLACK = "\033[30m"
-    RED = "\033[31m"
-    GREEN = "\033[32m"
-    YELLOW = "\033[33m"
-    BLUE = "\033[34m"
-    MAGENTA = "\033[35m"
-    CYAN = "\033[36m"
-    WHITE = "\033[37m"
-    BG_BLACK = "\033[40m"
-    BG_RED = "\033[41m"
-    BG_GREEN = "\033[42m"
-    BG_YELLOW = "\033[43m"
-    BG_BLUE = "\033[44m"
-    BG_MAGENTA = "\033[45m"
-    BG_CYAN = "\033[46m"
-    BG_WHITE = "\033[47m"
 def format_with_spaces(text):
     # Define a regular expression pattern to match special characters
     special_chars_pattern = r'([!@#$%^&*()_+{}\[\]:;"\'<>,.?/\|\\])'
 
     # Use re.sub() to replace special characters with spaces before and after
-    formatted_text = re.sub(special_chars_pattern, r' \1 ', text)
-
-    # Remove extra spaces that might have been added
-    formatted_text = ' '.join(formatted_text.split())
-
+    formatted_text= re.sub(special_chars_pattern,r' \1',text)
+    formatted_text=' '.join(formatted_text.split())
     return formatted_text
-
-
 # App title
 st.set_page_config(page_title="⚕️ Mirageye")
 
@@ -380,18 +342,18 @@ match selected_model:
             if wiki_content:
                 disease_info = summarize_text(wiki_content)
                 disease_info=format_with_spaces(disease_info).split()
-                info=""
-                color_code="\033[43m"
+                info=[]
                 for word in disease_info:
                     if fetch_wikipedia_content(word)  and word not in dont_include:
-                        info=info+" "+f"{color_code}{word}{TextColor.RESET}"
+                        info.append(f"<span style='background-color: yellow;'>{word}</span>")
                     else:
-                        info=info+" "+word
+                        info.append(f"{word}")
+                info=" ".join(info)
                 output=f"Information about {disease_name}"
                 st.text(output)
-                summary=f"Description:{info}"
-                summary=insert_newlines(summary)
+                summary=f"Description:"
                 st.text(summary)
+                st.markdown(info, unsafe_allow_html=True)
             else:
                 output=f"Failed to retrieve Wikipedia content for {disease_name}"
                 st.text(output)
