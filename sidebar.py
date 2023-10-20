@@ -2,11 +2,10 @@ import streamlit as st
 st.set_page_config(page_title="CryptoKnights")
 with st.sidebar:
     st.image("https://i.ibb.co/8mT3Qhq/cryptoknights-removebg-preview.png")
-    st.title(' CryptoKnights')
-    st.subheader('Models and Parameters')
+    st.title('Medical Assistant')
     selected_model = st.sidebar.selectbox('Choose a model', ['Pneumonia', 'Brain Tumor','Search'], key='selected_model')
-    st.write("<b>DISCLAIMER:</b>", unsafe_allow_html=True)
-    st.write("<b> The AI system serves as a supportive tool for radiologists and healthcare practitioners. The final interpretation of medical images and the diagnosis of diseases should be made by a licensed and trained medical professional.</b>", unsafe_allow_html=True)
+    st.write("<b>DISCLAIMER</b>", unsafe_allow_html=True)
+    st.write("The AI system serves as a supportive tool for radiologists and healthcare practitioners. The final interpretation of medical images and the diagnosis of diseases should be made by a licensed and trained medical professional.</b>", unsafe_allow_html=True)
     show_mission = st.button("Our Mission")
     if show_mission:
         st.write("Our mission is to harness the power of artificial intelligence to improve healthcare outcomes, enhance patient care, and assist healthcare professionals in making more accurate and timely diagnoses.")
