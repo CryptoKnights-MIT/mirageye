@@ -1,0 +1,7 @@
+version: '3'
+services:
+  mirageye:
+    image: cryptoknights.azurecr.io/mirageye:cpuv2
+    container_name: mirageye
+    ports:
+      - "80:8501"

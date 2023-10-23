@@ -1,9 +1,23 @@
-name: demo_azure
+name: streamlit-app
 channels:
  - conda-forge
  - defaults
 dependencies:
- - python=3.10
+ - python=3.11.5
  - pip
  - pip:
-   - streamlit
+    - streamlit
+    - pillow
+    - numpy
+    - opencv-python-headless
+    - seaborn
+    - matplotlib
+    - pandas
+    - tensorflow
+    - keras
+    - scikit-image
+    - scikit-learn
+    - requests
+    
+
+    

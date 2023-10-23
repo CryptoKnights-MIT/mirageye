@@ -23,11 +23,29 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import requests
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import re
+from google_trans_new import google_translator 
+from pygoogletranslation import Translator
+import googletrans
+
+from gtts import gTTS
+from io import BytesIO
 
 #Global variable
 wiki_api_url = "https://en.wikipedia.org/w/api.php"
 
+Languages = {'afrikaans':'af','albanian':'sq','amharic':'am','arabic':'ar','armenian':'hy','azerbaijani':'az','basque':'eu','belarusian':'be','bengali':'bn','bosnian':'bs','bulgarian':'bg','catalan':'ca','cebuano':'ceb','chichewa':'ny','chinese (simplified)':'zh-cn','chinese (traditional)':'zh-tw','corsican':'co','croatian':'hr','czech':'cs','danish':'da','dutch':'nl','english':'en','esperanto':'eo','estonian':'et','filipino':'tl','finnish':'fi','french':'fr','frisian':'fy','galician':'gl','georgian':'ka','german':'de','greek':'el','gujarati':'gu','haitian creole':'ht','hausa':'ha','hawaiian':'haw','hebrew':'iw','hebrew':'he','hindi':'hi','hmong':'hmn','hungarian':'hu','icelandic':'is','igbo':'ig','indonesian':'id','irish':'ga','italian':'it','japanese':'ja','javanese':'jw','kannada':'kn','kazakh':'kk','khmer':'km','korean':'ko','kurdish (kurmanji)':'ku','kyrgyz':'ky','lao':'lo','latin':'la','latvian':'lv','lithuanian':'lt','luxembourgish':'lb','macedonian':'mk','malagasy':'mg','malay':'ms','malayalam':'ml','maltese':'mt','maori':'mi','marathi':'mr','mongolian':'mn','myanmar (burmese)':'my','nepali':'ne','norwegian':'no','odia':'or','pashto':'ps','persian':'fa','polish':'pl','portuguese':'pt','punjabi':'pa','romanian':'ro','russian':'ru','samoan':'sm','scots gaelic':'gd','serbian':'sr','sesotho':'st','shona':'sn','sindhi':'sd','sinhala':'si','slovak':'sk','slovenian':'sl','somali':'so','spanish':'es','sundanese':'su','swahili':'sw','swedish':'sv','tajik':'tg','tamil':'ta','telugu':'te','thai':'th','turkish':'tr','turkmen':'tk','ukrainian':'uk','urdu':'ur','uyghur':'ug','uzbek':'uz','vietnamese':'vi','welsh':'cy','xhosa':'xh','yiddish':'yi','yoruba':'yo','zulu':'zu'}
+
 # Global functions
+def feedback():
+    st.header("Feedback Form")
+    feedback = st.text_area("Please provide your feedback:")
+
+    if st.button("Submit Feedback"):
+        if feedback:
+            st.success("Thank you for your feedback!")
+    else:
+        st.warning("Please enter your feedback before submitting.")
+
 
 # Gradcam functions
 def normalize(x):
@@ -128,10 +146,11 @@ def gengradcambox(score_cam_superimposed):
     cb = plt.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap), cax=cax, label="Severity (%)", orientation='vertical')
     # Display the plot
     ax.axis('off')
+    plt.title("Using Gradcam")
     return plt
 #api rel functions
 
-dont_include="this the and in out when where if location of may result on as a an from since why how or "
+dont_include="this the and over under small other about above below right nearby faraway  in out when where if location of may result on as a an from since why how or by might may will should would could they act body it "
 
 def fetch_wikipedia_content(article_title):
     # Parameters for the Wikipedia API request
@@ -174,27 +193,40 @@ def format_with_spaces(text):
     formatted_text=' '.join(formatted_text.split())
     return formatted_text
 # App title
-st.set_page_config(page_title="⚕️ Mirageye")
+st.set_page_config(page_title="CryptoKnights")
 
 
 # Sidebar
 with st.sidebar:
-    st.image("https://i.ibb.co/8mT3Qhq/cryptoknights-removebg-preview.png")
+    st.image("https://i.ibb.co/TTPW5R5/l6fbgue7.png")
     st.title('Medical Assistant')
-    selected_model = st.sidebar.selectbox('Choose a model', ['Pneumonia', 'Brain Tumor','Search'], key='selected_model')
-    st.write("<b>DISCLAIMER</b>", unsafe_allow_html=True)
-    st.write("The AI system serves as a supportive tool for radiologists and healthcare practitioners. The final interpretation of medical images and the diagnosis of diseases should be made by a licensed and trained medical professional.</b>", unsafe_allow_html=True)
-    show_mission = st.button("Our Mission")
+    selected_model = st.sidebar.selectbox('Choose a model', ['Pneumonia', 'Brain Tumor','Search',"Feedback"], key='selected_model')
+    col1, col2, col3 = st.columns([1,1,1])
+    with col1:
+        show_mission = st.button("Mission")
+        
+    with col2:
+        show_future_scope = st.button("Future")
+    
+    with col3:
+        show_contact_us = st.button("Contact")
+
+    if show_future_scope:
+        st.write("<ul><li>Improved Accuracy and Efficiency</li><li>Early Disease Detection</li><li>Expanding Disease Types</li><li>Integration with Healthcare Systems</li><li>Continuous Learning and Improvement</li><li>Ethical and Regulatory Considerations</li></ul>", unsafe_allow_html=True)
+
     if show_mission:
         st.write("Our mission is to harness the power of artificial intelligence to improve healthcare outcomes, enhance patient care, and assist healthcare professionals in making more accurate and timely diagnoses.")
-    show_future_scope = st.button("Future Scope")
-    if show_future_scope:
-        st.write("Improved Accuracy and Efficiency\nEarly Disease Detection\nExpanding Disease Types\nIntegration with Healthcare Systems\nContinuous Learning and Improvement\nEthical and Regulatory Considerations")
-    show_contact_us = st.button("Contact Us")
+    
     if show_contact_us:
-        st.write("<b>Address:</b> Manipal, India, 576104", unsafe_allow_html=True)
-        st.write("<b>Phone:</b> +91-123456789", unsafe_allow_html=True)
+        st.write("<ul><li><b>Address:</b> Manipal, India, 576104</li><li><b>Phone:</b> +91-123456789</li></ul>", unsafe_allow_html=True)
 
+    st.subheader("DISCLAIMER")
+    st.write("This simply serves as a supportive tool for diagnosis. The final interpretation of medical images should only be made by a licensed doctor.</b>", unsafe_allow_html=True)
+    
+
+    
+    
+    
 # Going into the model
 match selected_model:
      
@@ -203,6 +235,7 @@ match selected_model:
         # Upload image
         uploaded_image = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"],key="pneu")
         if uploaded_image is not None:
+            st.toast("Image uploaded successfully", icon='👩‍⚕️')
             image = Image.open(uploaded_image)
             st.image(image, caption="Uploaded Image", use_column_width=True)
             # Load model with GPU
@@ -222,10 +255,10 @@ match selected_model:
                     y_pred = y_prob.argmax(axis=-1)
                     #time.sleep(2)
 
-                st.subheader("Prediction")
+                st.toast("Prediction complete",icon='👩‍⚕️')
                 total = y_prob[0][1] + y_prob[0][2]
-                st.write(f"You have a {total*100:.2f}% chance of having pneumonia.")
-                st.write(f"(Bacterial: {y_prob[0][1]*100:.2f}% chance) (Viral: {y_prob[0][2]*100:.2f}% chance)")
+                st.write(f"<h4>You have a <b>{total*100:.2f}% </b> chance of having Pneumonia</h4>", unsafe_allow_html=True)
+                st.write(f"<ul><li><b>Bacterial Pneumonia:</b> {y_prob[0][1]*100:.2f}% chance</li><li><b>Viral Pneumonia:</b> {y_prob[0][2]*100:.2f}% chance</li></ul>", unsafe_allow_html=True)
 
                 # Heatmap
                 st.subheader("Heatmap")
@@ -233,15 +266,16 @@ match selected_model:
                 st.pyplot(fig)
 
                 # Gradcam
-                st.subheader("Gradcam")
+                st.subheader("Severity Map")
                 layer_name = 'conv2d_1'
                 input_shape = (150,150,3)
                 with st.spinner("Generating gradcam..."):
                     score_cam = ScoreCam(model, p_img, layer_name, input_shape)
-                
+                st.toast("Severity Map Generated", icon='👩‍⚕️')
                 score_cam_superimposed = superimpose(uploaded_image, score_cam)
                 plt = gengradcambox(score_cam_superimposed)
                 st.pyplot(plt)
+                st.markdown(f"The box is the region with highest amount of pathogens",unsafe_allow_html=True)
 
                 # Calculate percentage
                 size=score_cam_superimposed.size
@@ -258,21 +292,20 @@ match selected_model:
                 frac_blu=np.divide(float(no_blu),int(size))
                 percent_blu=np.multiply(float(frac_blu),100)
                 percent_yel=100-percent_red-percent_blu
-                txt_percent_red = f"Percent Area in high severity: {percent_red}"
-                txt_percent_blu = f"Percent Area in medium severity: {percent_yel}"
-                txt_percent_yel = f"Percent Area in low severity: {percent_blu}"
-                st.text(txt_percent_red)
-                st.text(txt_percent_blu)
-                st.text(txt_percent_yel)
-                del model
+                st.write(f"<ul><li>High Severity: {percent_red:.2f}%</li><li>Medium Severity: {percent_yel:.2f}%</li><li>Low Severity: {percent_blu:.2f}%</li></ul>", unsafe_allow_html=True)
+
+                st.toast("Please fill the feedback form", icon='👩‍⚕️')
+                
+            del model
                 
                 
 
     case "Brain Tumor":
         uploaded_image = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"],key="brain")
-        class_names = ['glioma_tumor', 'meningioma_tumor', 'normal', 'pituitary_tumor']
+        class_names = ['Glioma Tumor', 'Meningioma Tumor', 'Normal', 'Pituitary Tumor']
 
         if uploaded_image is not None:
+            st.toast("Image uploaded successfully", icon='👩‍⚕️')
             image = Image.open(uploaded_image)
             st.image(image, caption="Uploaded Image", use_column_width=True)
             # Load model with GPU
@@ -292,8 +325,9 @@ match selected_model:
                     predicted_class = np.argmax(predictions[0])
                     prediction_label = class_names[predicted_class]
 
-                st.subheader("Prediction")                
-                st.write(prediction_label)
+                st.toast("Prediction complete", icon='👩‍⚕️')    
+                st.subheader("Prediction")        
+                st.write(f"<h6>{prediction_label}</h6>", unsafe_allow_html=True)
 
                 # Heatmap
                 st.subheader("Heatmap")
@@ -304,15 +338,19 @@ match selected_model:
                 st.pyplot(fig)
 
                 # Gradcam
-                st.subheader("Gradcam")
+                st.subheader("Severity Map")
                 layer_name = 'block5_conv3'
                 input_shape = (224,224,3)
-                with st.spinner("Generating gradcam..."):
+                with st.spinner("Generating Severity Map..."):
+                
                     score_cam = ScoreCam(model, img, layer_name, input_shape, max_N=25)
                 
+                
                 score_cam_superimposed = superimpose(uploaded_image, score_cam)
+                st.toast("Severity Map Generated", icon='👩‍⚕️')
                 plt = gengradcambox(score_cam_superimposed)
                 st.pyplot(plt)
+                st.markdown(f"The box signifies the tumor",unsafe_allow_html=True)
 
                 size=score_cam_superimposed.size
                 RED_MIN=np.array([0,0,128],np.uint8)
@@ -328,36 +366,58 @@ match selected_model:
                 frac_blu=np.divide(float(no_blu),int(size))
                 percent_blu=np.multiply(float(frac_blu),100)
                 percent_yel=100-percent_red-percent_blu
-                txt_percent_red = f"Percent Area in high severrity: {percent_red}"
-                txt_percent_blu = f"Percent Area in medium severity: {percent_yel}"
-                txt_percent_yel = f"Percent Area in low severity: {percent_blu}"
-                st.text(txt_percent_red)
-                st.text(txt_percent_blu)
-                st.text(txt_percent_yel)
+                st.write(f"<ul><li>High Severity: {percent_red:.2f}%</li><li>Medium Severity: {percent_yel:.2f}%</li><li>Low Severity: {percent_blu:.2f}%</li></ul>", unsafe_allow_html=True)
+                st.toast("Please fill the feedback form", icon='👩‍⚕️')
                 del model
-    case "Search":
-        disease_name=st.text_input("Enter Disease name:","")
-        if(disease_name):
-            wiki_content = fetch_wikipedia_content(disease_name)
-            if wiki_content:
-                disease_info = summarize_text(wiki_content)
-                disease_info=format_with_spaces(disease_info).split()
-                info=[]
-                for word in disease_info:
-                    if fetch_wikipedia_content(word)  and word not in dont_include:
-                        info.append(f"<span style='background-color: yellow;'>{word}</span>")
-                    else:
-                        info.append(f"{word}")
-                info=" ".join(info)
-                output=f"Information about {disease_name}"
-                st.text(output)
-                summary=f"Description:"
-                st.text(summary)
-                st.markdown(info, unsafe_allow_html=True)
-            else:
-                output=f"Failed to retrieve Wikipedia content for {disease_name}"
-                st.text(output)
                 
+                
+    case "Search":
+        translator = Translator()
+        option1 = st.selectbox('Preferred language',
+                      ('english', 'afrikaans', 'albanian', 'amharic', 'arabic', 'armenian', 'azerbaijani', 'basque', 'belarusian', 'bengali', 'bosnian', 'bulgarian', 'catalan', 'cebuano', 'chichewa', 'chinese (simplified)', 'chinese (traditional)', 'corsican', 'croatian', 'czech', 'danish', 'dutch',  'esperanto', 'estonian', 'filipino', 'finnish', 'french', 'frisian', 'galician', 'georgian', 'german', 'greek', 'gujarati', 'haitian creole', 'hausa', 'hawaiian', 'hebrew', 'hindi', 'hmong', 'hungarian', 'icelandic', 'igbo', 'indonesian', 'irish', 'italian', 'japanese', 'javanese', 'kannada', 'kazakh', 'khmer', 'korean', 'kurdish (kurmanji)', 'kyrgyz', 'lao', 'latin', 'latvian', 'lithuanian', 'luxembourgish', 'macedonian', 'malagasy', 'malay', 'malayalam', 'maltese', 'maori', 'marathi', 'mongolian', 'myanmar (burmese)', 'nepali', 'norwegian', 'odia', 'pashto', 'persian', 'polish', 'portuguese', 'punjabi', 'romanian', 'russian', 'samoan', 'scots gaelic', 'serbian', 'sesotho', 'shona', 'sindhi', 'sinhala', 'slovak', 'slovenian', 'somali', 'spanish', 'sundanese', 'swahili', 'swedish', 'tajik', 'tamil', 'telugu', 'thai', 'turkish', 'turkmen', 'ukrainian', 'urdu', 'uyghur', 'uzbek', 'vietnamese', 'welsh', 'xhosa', 'yiddish', 'yoruba', 'zulu'))
+        if(option1):
+            value1 = Languages[option1]
+            disease_name=st.text_input("Enter Disease name:","")
+            if(disease_name):
+                wiki_content = fetch_wikipedia_content(disease_name)
+                if wiki_content:
+                    disease_info = summarize_text(wiki_content)
+                    disease_info1=format_with_spaces(disease_info).split()
+                    info=[]
+                    for word in disease_info1:
+                        if fetch_wikipedia_content(word)  and word not in dont_include and len(word)>=5:
+                            # D8C4B6
+                            info.append(f"<span style='background-color:purple;'>{word}</span>")
+
+                        else:
+                            info.append(f"{word}")
+                    info=" ".join(info)
+                    output=f"Information about {disease_name}"
+                    st.text(output)
+                    summary=f"Description:"
+                    if(value1 != 'en'):
+                        disease_info = translator.translate(disease_info,src='en',dest=value1)
+                        disease_info =  disease_info.text
+                        st.markdown(disease_info)
+                    else:
+                        st.text(summary)
+                        st.markdown(info, unsafe_allow_html=True)
+                    try:
+                        tts = gTTS(text=disease_info, lang=value1)
+                        audio_buffer = BytesIO()
+                        tts.write_to_fp(audio_buffer)
+
+                        # Display the audio using the Audio component
+                        audio_buffer.seek(0)
+                        st.audio(audio_buffer, format="audio/mp3")
+                    except Exception as e:
+                        st.error(f"Error: {str(e)}")
+                else:
+                    output=f"Failed to retrieve Wikipedia content for {disease_name}"
+                    st.text(output)
+                
+    case "Feedback":
+        feedback()          
 
 
 
